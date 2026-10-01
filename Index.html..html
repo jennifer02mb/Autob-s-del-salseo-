@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#8b4b3e">
+<title>El Autobús del Salseo</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f8f2ed;color:#241d1a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:760px;margin:auto;padding:18px 14px 40px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+h1{font-size:21px;margin:0}.sub{color:#746963;font-size:13px;margin-top:3px}.card{background:#fffaf5;border:1px solid #eadfd7;border-radius:18px;padding:16px;margin-top:12px;box-shadow:0 3px 12px #00000008}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#fff;border:1px solid #eadfd7;border-radius:14px;padding:12px}.muted{color:#746963;font-size:13px}.big{font-size:24px;font-weight:800}.mission{font-size:21px;font-weight:800;line-height:1.25;margin-top:5px}
+label{font-size:13px;font-weight:650}input{width:100%;margin-top:6px;padding:11px;border:1px solid #d9ccc4;border-radius:11px;font-size:16px;background:white}
+button{border:1px solid #d9ccc4;background:#fff;border-radius:12px;padding:11px 14px;font-weight:750;font-size:14px;min-height:44px}button.primary{background:#8b4b3e;color:white;border-color:#8b4b3e}button:active{transform:scale(.98)}button:disabled{opacity:.45}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.pill{display:inline-block;background:#f1e1dc;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:750;margin-right:4px}
+.question{font-size:19px;line-height:1.4;font-weight:650;margin-top:8px}.scoreline{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee3dc}.scoreline:last-child{border:0}
+details{margin-top:10px}summary{font-weight:750;cursor:pointer}.hide{display:none!important}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div><h1>🚌 El Autobús del Salseo</h1><div class="sub">Vosotras ponéis las cartas. La app lleva la partida.</div></div>
+    <button id="newBtn">Nueva</button>
+  </div>
+
+  <section id="setup" class="card">
+    <h2 style="margin-top:0">Preparad la partida 🃏</h2>
+    <p class="muted">Jugáis con vuestra baraja española física. La app solo lleva rondas, puntos, preguntas y fichas.</p>
+    <div class="grid">
+      <label>Jugadora 1<input id="p1" value="Jennifel"></label>
+      <label>Jugadora 2<input id="p2" value="Amiga 2"></label>
+      <label>Jugadora 3<input id="p3" value="Amiga 3"></label>
+    </div>
+    <div class="actions"><button id="start" class="primary">Empezar partida 💅</button></div>
+  </section>
+
+  <main id="game" class="hide">
+    <section class="grid">
+      <div class="stat"><div class="muted">RONDA</div><div id="round" class="big"></div></div>
+      <div class="stat"><div class="muted">TURNO</div><div id="turn" class="big"></div></div>
+      <div class="stat"><div class="muted">FASE</div><div id="phase" class="big"></div></div>
+    </section>
+
+    <section class="card">
+      <div class="muted">MISIÓN DE ESTA RONDA</div>
+      <div id="mission" class="mission"></div>
+      <div class="muted" style="margin-top:8px">Cuando una jugadora consiga la misión con sus cartas físicas, pulsa el botón.</div>
+      <div class="actions">
+        <button id="complete" class="primary">🏆 He completado la misión</button>
+        <button id="rules">Reglas</button>
+      </div>
+      <div id="rulesText" class="hide muted" style="margin-top:12px;line-height:1.55">
+        <b>Turno:</b> roba del mazo o del descarte → forma combinaciones si quieres → descarta una carta.<br>
+        <b>Trío:</b> 3 o más del mismo número. <b>Escalera:</b> 3 o más consecutivas del mismo palo.<br>
+        <b>Pareja:</b> solo cuenta cuando la misión la pide. El resto se juega como Remigio: intentad quedaros sin cartas al completar vuestra misión.
+      </div>
+    </section>
+
+    <section class="card">
+      <div><span class="pill">🟢 Salseo</span><span class="pill">🟡 Reconexión</span><span class="pill">🔴 Desahogo</span></div>
+      <div id="question" class="question">Pulsad «Sacar pregunta» cuando queráis.</div>
+      <div class="actions">
+        <button id="questionBtn" class="primary">💬 Sacar pregunta</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="muted">PUNTUACIÓN</div>
+      <div id="scores" style="margin-top:7px"></div>
+      <div id="fiches" style="margin-top:10px"></div>
+    </section>
+
+    <section id="end" class="card hide">
+      <h2>🏁 Fin de la partida</h2>
+      <div id="winner"></div>
+      <div class="actions"><button id="again" class="primary">Jugar otra vez</button></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const missions=[
+["🟢","1 trío + 1 pareja",5],["🟢","1 escalera de 4 + 1 trío",5],
+["🟢","2 tríos",5],["🟡","1 escalera de 5",6],
+["🟡","1 trío + 1 escalera de 3",6],["🟡","2 escaleras de 3",6],
+["🔴","1 cuarteto + 1 escalera de 3",7],["🔴","1 escalera de 6 + 1 trío",7],
+["🔴","10 cartas formando combinaciones válidas",8],["🔴","1 escalera de 5 + 1 trío + 1 pareja",10]
+];
+const questions={
+green:["¿Quién de las tres tiene peor criterio ligando?","¿Quién desaparecería 48 horas y volvería como si nada?","¿Quién tiene más posibilidades de volver con alguien que no le conviene?","¿Cuál es la mentira más absurda que has contado para cancelar un plan?","¿Quién sería peor compañera en un reality?","¿Qué cotilleo absurdo podrías investigar durante horas?","¿Quién se enamoraría primero en un apocalipsis?","¿Cuál es vuestra anécdota más ridícula juntas?","¿Qué hábito tuyo las otras dos encontrarían insoportable?","¿Quién tiene más papeletas para hacer una locura esta noche?"],
+yellow:["¿Qué época de vuestra amistad recuperarías exactamente como era?","¿Qué hacíais antes que ahora echas de menos?","¿Cuál es un recuerdo vuestro que probablemente las otras han olvidado?","¿Qué era lo mejor de vuestra amistad cuando estabais súper unidas?","¿Qué costumbre vuestra deberíais recuperar?","¿Quién crees que ha cambiado más desde que os conocisteis?","¿Cuál fue vuestra época más caótica?","¿Qué pequeño momento juntas guardarías para siempre?","¿Qué te gustaría volver a vivir con ellas este año?","¿Qué plan sencillo os gustaría hacer más a menudo juntas?"],
+red:["¿Qué parte de tu vida estás fingiendo tener más controlada de lo que realmente tienes?","¿Qué miedo tienes actualmente que casi nunca dices en voz alta?","¿Qué estás echando de menos últimamente?","¿Qué relación de tu vida te está afectando más de lo que admites?","¿Qué necesitas actualmente de tus amigas y quizá no estás pidiendo?","¿Qué estás aguantando que te está pesando más de lo que reconoces?","¿Qué parte de ti misma estás intentando entender todavía?","¿Cuándo fue la última vez que dijiste «estoy bien» sin estarlo?","¿Qué te gustaría cambiar de tu vida pero todavía no sabes cómo?","Si volviéramos a alejarnos, ¿qué te gustaría que hiciéramos diferente?"]
+};
+let s={players:[],scores:[0,0,0],round:0,turn:0,fiches:[0,0,0],used:{green:[],yellow:[],red:[]}};
+const $=id=>document.getElementById(id);
+function phaseKey(){return missions[s.round][0]=="🟢"?"green":missions[s.round][0]=="🟡"?"yellow":"red"}
+function render(){
+  $("round").textContent=(s.round+1)+"/10"; $("turn").textContent=s.players[s.turn]; $("phase").textContent=missions[s.round][0];
+  $("mission").textContent=missions[s.round][1];
+  $("scores").innerHTML=s.players.map((p,i)=>`<div class="scoreline"><span>${p}</span><b>${s.scores[i]} pts</b></div>`).join("");
+  $("fiches").innerHTML=s.players.map((p,i)=>`${p}: ${s.fiches[i]>=1?"🟢":"⚪"} ${s.fiches[i]>=2?"🟡":"⚪"} ${s.fiches[i]>=3?"🔴":"⚪"}`).join("<br>");
+}
+function question(){
+  const k=phaseKey(), a=questions[k], used=s.used[k];
+  if(used.length>=a.length)used.length=0;
+  const choices=a.map((_,i)=>i).filter(i=>!used.includes(i));
+  const i=choices[Math.floor(Math.random()*choices.length)]; used.push(i);
+  $("question").textContent=a[i];
+}
+function start(){
+  const p=[$("p1").value.trim(),$("p2").value.trim(),$("p3").value.trim()];
+  if(p.some(x=>!x)){alert("Poned los tres nombres 😊");return}
+  s={players:p,scores:[0,0,0],round:0,turn:0,fiches:[0,0,0],used:{green:[],yellow:[],red:[]}};
+  $("setup").classList.add("hide");$("game").classList.remove("hide");$("end").classList.add("hide");render();
+}
+function reset(){location.reload()}
+$("start").onclick=start;$("again").onclick=reset;$("newBtn").onclick=reset;$("questionBtn").onclick=question;
+$("rules").onclick=()=>{$("rulesText").classList.toggle("hide")};
+$("complete").onclick=()=>{
+  const [ph,_,pts]=missions[s.round];s.scores[s.turn]+=pts;
+  if(ph=="🟢"&&s.fiches[s.turn]<1)s.fiches[s.turn]=1;
+  if(ph=="🟡"&&s.fiches[s.turn]<2)s.fiches[s.turn]=2;
+  if(ph=="🔴"&&s.fiches[s.turn]<3)s.fiches[s.turn]=3;
+  if(s.round===9){
+    const max=Math.max(...s.scores), winners=s.players.filter((_,i)=>s.scores[i]===max);
+    $("winner").innerHTML=`<p>Resultado: <b>${winners.join(" y ")}</b> termina${winners.length>1?"n":" "} con ${max} puntos.</p><p class="muted">Si queréis desempatar, haced una pregunta roja cada una y votad cuál respuesta os ha hecho más gracia 😈</p>`;
+    $("end").classList.remove("hide");render();return;
+  }
+  s.round++;s.turn=(s.turn+1)%3;render();
+  $("question").textContent="Ronda nueva. Sacad pregunta cuando queráis 💬";
+};
+</script>
+</body>
+</html>
